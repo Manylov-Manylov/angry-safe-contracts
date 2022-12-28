@@ -2,9 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/access/Ownable.sol";
 import "./interfaces/IUniswapV2Router.sol";
 
-contract AngrySafe {
+contract AngrySafe is Ownable {
     struct Account {
         uint256 lastDepositTimestamp;
         uint256 depositsLeft;
@@ -15,12 +16,12 @@ contract AngrySafe {
 
     mapping(address => Account) public accounts;
 
-    address private constant UNISWAP_V2_ROUTER =
-        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address private constant PANCAKESWAP_V2_ROUTER =
+        0x10ED43C718714eb63d5aA57B78B54704E256024E;
+    address private constant WETH = 0x2170Ed0880ac9A755fd29B2688956BD959F933F8;
+    address constant USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d;
 
-    IUniswapV2Router private router = IUniswapV2Router(UNISWAP_V2_ROUTER);
+    IUniswapV2Router private router = IUniswapV2Router(PANCAKESWAP_V2_ROUTER);
     IERC20 private weth = IERC20(WETH);
     IERC20 private usdc = IERC20(USDC);
 
@@ -140,5 +141,12 @@ contract AngrySafe {
 
         weth.transfer(msg.sender, withrawAmount);
         emit Withdraw(msg.sender, withrawAmount);
+    }
+
+    function sweepToken(IERC20 token) external onlyOwner {
+        require(address(token) != WETH, "can not sweep underlying token");
+        require(address(token) != USDC, "can not sweep underlying token");
+        uint256 balance = token.balanceOf(address(this));
+        token.transfer(owner(), balance);
     }
 }
