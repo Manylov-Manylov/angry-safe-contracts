@@ -3,7 +3,8 @@
 ## how to deploy
 
 ### create .env
-PRIVATE_KEY=
+PRIVATE_KEY=...
+
 BSC_RPC_URL=https://bsc-dataseed.binance.org/
 
 ### in terminal do
