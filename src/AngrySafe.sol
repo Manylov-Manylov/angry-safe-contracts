@@ -4,14 +4,16 @@ pragma solidity ^0.8.13;
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/access/Ownable.sol";
 import "./interfaces/IUniswapV2Router.sol";
+import "forge-std/Test.sol";
 
-contract AngrySafe is Ownable {
+contract AngrySafe is Ownable, Test {
     struct Account {
         uint256 lastDepositTimestamp;
         uint256 depositsLeft;
         uint256 usdcTotal;
         uint256 ethTotal;
         uint256 minDeposit;
+        bool withdrawOnly;
     }
 
     mapping(address => Account) public accounts;
@@ -34,16 +36,23 @@ contract AngrySafe is Ownable {
     event Withdraw(address indexed user, uint256 amount);
 
     error WithdrawalIsNotReady();
-    error DepositError();
+    error WithdrawOnly();
+    error DepositLessThanMinimal();
     error NotInitialized();
     error AlreadyInitialized();
+    error WrongParams();
 
     function initialize(uint256 minDeposit_, uint256 depositsAmount_) external {
         Account memory account = accounts[msg.sender];
 
+        if (account.withdrawOnly) revert WithdrawOnly();
+
         if (account.depositsLeft > 0) {
             revert AlreadyInitialized();
         }
+
+        if (minDeposit_ == 0) revert WrongParams();
+        if (depositsAmount_ == 0) revert WrongParams();
 
         account.depositsLeft = depositsAmount_;
         account.minDeposit = minDeposit_;
@@ -65,11 +74,20 @@ contract AngrySafe is Ownable {
     {
         Account memory account = accounts[msg.sender];
 
+        if (account.withdrawOnly) revert WithdrawOnly();
+
         if (account.depositsLeft == 0) {
             revert NotInitialized();
         }
 
+        console.log("amount", amount_);
+        if (amount_ < account.minDeposit) {
+            revert DepositLessThanMinimal();
+        }
+
         uint256 wethAmount = _swapExactAmountIn(amount_);
+
+        // console.log("weth amount", wethAmount);
 
         account.usdcTotal = account.usdcTotal + amount_;
         account.ethTotal = account.ethTotal + wethAmount;
@@ -89,6 +107,12 @@ contract AngrySafe is Ownable {
 
         // check if deposit in the same month - then just add deposit to this month deposit,
         // not decreasing deposits left
+        console.log("block timestamp", block.timestamp);
+        console.log(
+            "account.lastDepositTimestamp",
+            account.lastDepositTimestamp
+        );
+
         if (block.timestamp < account.lastDepositTimestamp + 30 days) {
             return (wethAmount, account);
         }
@@ -97,6 +121,8 @@ contract AngrySafe is Ownable {
         // here block.timestamp less than 31 days and more than 30 days
         account.lastDepositTimestamp = block.timestamp;
         account.depositsLeft = account.depositsLeft - 1;
+
+        if (account.depositsLeft == 0) account.withdrawOnly = true;
 
         return (wethAmount, account);
     }
