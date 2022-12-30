@@ -16,4 +16,5 @@ moonriver = "https://moonriver.public.blastapi.io"
 gnosis = "https://rpc.ankr.com/gnosis"
 avax = "https://rpc.ankr.com/avalanche"
 polygon = "https://rpc.ankr.com/polygon"
+bsc_testnet = "https://data-seed-prebsc-1-s1.binance.org:8545/"
 

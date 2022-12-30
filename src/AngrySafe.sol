@@ -18,14 +18,14 @@ contract AngrySafe is Ownable, Test {
 
     mapping(address => Account) public accounts;
 
-    address private constant PANCAKESWAP_V2_ROUTER =
-        0x10ED43C718714eb63d5aA57B78B54704E256024E;
-    address private constant WETH = 0x2170Ed0880ac9A755fd29B2688956BD959F933F8;
-    address constant USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d;
+    // address private constant PANCAKESWAP_V2_ROUTER =
+    //     0x10ED43C718714eb63d5aA57B78B54704E256024E;
+    // address private constant WETH = 0x2170Ed0880ac9A755fd29B2688956BD959F933F8;
+    // address constant USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d;
 
-    IUniswapV2Router private router = IUniswapV2Router(PANCAKESWAP_V2_ROUTER);
-    IERC20 private weth = IERC20(WETH);
-    IERC20 private usdc = IERC20(USDC);
+    IUniswapV2Router private router;
+    IERC20 private weth;
+    IERC20 private usdc;
 
     event Initialized(
         address indexed user,
@@ -41,6 +41,16 @@ contract AngrySafe is Ownable, Test {
     error NotInitialized();
     error AlreadyInitialized();
     error WrongParams();
+
+    constructor(
+        address router_,
+        address weth_,
+        address usdc_
+    ) {
+        router = IUniswapV2Router(router_);
+        weth = IERC20(weth_);
+        usdc = IERC20(usdc_);
+    }
 
     function initialize(uint256 minDeposit_, uint256 depositsAmount_) external {
         Account memory account = accounts[msg.sender];
@@ -136,8 +146,8 @@ contract AngrySafe is Ownable, Test {
 
         address[] memory path;
         path = new address[](2);
-        path[0] = USDC;
-        path[1] = WETH;
+        path[0] = address(usdc);
+        path[1] = address(weth);
 
         uint256[] memory amounts = router.swapExactTokensForTokens(
             amountIn,
@@ -169,10 +179,16 @@ contract AngrySafe is Ownable, Test {
         emit Withdraw(msg.sender, withrawAmount);
     }
 
-    function sweepToken(IERC20 token) external onlyOwner {
-        require(address(token) != WETH, "can not sweep underlying token");
-        require(address(token) != USDC, "can not sweep underlying token");
-        uint256 balance = token.balanceOf(address(this));
-        token.transfer(owner(), balance);
+    function sweepToken(address token) external onlyOwner {
+        require(
+            address(token) != address(weth),
+            "can not sweep underlying token"
+        );
+        require(
+            address(token) != address(usdc),
+            "can not sweep underlying token"
+        );
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        IERC20(token).transfer(owner(), balance);
     }
 }

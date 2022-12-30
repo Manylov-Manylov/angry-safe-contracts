@@ -15,15 +15,13 @@ contract AngrySafeTest is Test {
     uint256 minDeposit_ = 1e18;
     uint256 depositsAmount_ = 2;
 
-    address constant USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d;
-    IERC20 private usdc = IERC20(USDC);
-    uint256 initialUsdcBalance = 1e30;
+    IERC20 private weth;
+    IERC20 private usdc;
+    IERC20 private sweepToken;
 
-    address private constant WETH = 0x2170Ed0880ac9A755fd29B2688956BD959F933F8;
-    IERC20 private weth = IERC20(WETH);
+    IUniswapV2Router private router;
 
-    address private constant PANCAKESWAP_V2_ROUTER =
-        0x10ED43C718714eb63d5aA57B78B54704E256024E;
+    uint256 initialUsdcBalance = 50e50;
 
     function writeTokenBalance(
         address who,
@@ -37,17 +35,63 @@ contract AngrySafeTest is Test {
             .checked_write(amt);
     }
 
-    function setUp() public {
-        vm.createSelectFork("bsc");
-        safe = new AngrySafe();
+    function getAddresses(uint256 mode)
+        internal
+        pure
+        returns (
+            address routerAddress,
+            address wethAddress,
+            address usdcAddress,
+            address sweepTokenAddress
+        )
+    {
+        if (mode == 1) {
+            routerAddress = 0x10ED43C718714eb63d5aA57B78B54704E256024E;
+            wethAddress = 0x2170Ed0880ac9A755fd29B2688956BD959F933F8;
+            usdcAddress = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d;
+            sweepTokenAddress = 0x1CE0c2827e2eF14D5C4f29a091d735A204794041;
+            return (routerAddress, wethAddress, usdcAddress, sweepTokenAddress);
+        }
 
-        writeTokenBalance(address(this), USDC, initialUsdcBalance);
+        // testnet
+        routerAddress = 0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3;
+        wethAddress = 0x8BaBbB98678facC7342735486C851ABD7A0d17Ca;
+        usdcAddress = 0x8a9424745056Eb399FD19a0EC26A14316684e274; //dai
+        sweepTokenAddress = 0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7; // busd
+        return (routerAddress, wethAddress, usdcAddress, sweepTokenAddress);
+    }
+
+    function setUp() public {
+        uint256 mode = 2; // 1 - mainnet, 2 - testnet
+        (
+            address routerAddress,
+            address wethAddress,
+            address usdcAddress,
+            address sweepTokenAddress
+        ) = getAddresses(mode);
+
+        usdc = IERC20(usdcAddress);
+        weth = IERC20(wethAddress);
+        sweepToken = IERC20(sweepTokenAddress);
+
+        if (mode == 1) {
+            vm.createSelectFork("bsc");
+        }
+        if (mode == 2) {
+            vm.createSelectFork("bsc_testnet");
+        }
+
+        safe = new AngrySafe(routerAddress, wethAddress, usdcAddress);
+
+        writeTokenBalance(address(this), usdcAddress, initialUsdcBalance);
+        writeTokenBalance(address(safe), sweepTokenAddress, initialUsdcBalance);
+
         usdc.approve(address(safe), type(uint256).max);
     }
 
     function testSetup() public {
         uint256 usdcBalance = usdc.balanceOf(address(this));
-        console.log("initial usdc balance", usdcBalance);
+        // console.log("initial usdc balance", usdcBalance);
         assertEq(usdcBalance, initialUsdcBalance);
     }
 
@@ -62,6 +106,8 @@ contract AngrySafeTest is Test {
         _testFailDepositIfCompleted();
         _testFailInitializeIfWithdrawOnly();
         _testWithdrawSuccess();
+        _testFailSweepTokenIfNotOwner();
+        _testSweepTokenByOwner();
     }
 
     function _testFailDepositIfNotInitialized() public {
@@ -243,5 +289,38 @@ contract AngrySafeTest is Test {
         console.log("balance after withdraw", wethBalanceAfter);
 
         assertGt(wethBalanceAfter, wethBalanceBefore);
+    }
+
+    function _testFailSweepTokenIfNotOwner() public {
+        vm.prank(address(0x69));
+        vm.expectRevert("Ownable: caller is not the owner");
+        safe.sweepToken(address(sweepToken));
+    }
+
+    function _testSweepTokenByOwner() public {
+        uint256 contractSweepTokenBalanceBefore = sweepToken.balanceOf(
+            address(safe)
+        );
+        uint256 ownerSweepTokenBalanceBefore = sweepToken.balanceOf(
+            address(this)
+        );
+
+        console.log("safe sweepToken before", contractSweepTokenBalanceBefore);
+        console.log("owner sweepToken before", ownerSweepTokenBalanceBefore);
+
+        safe.sweepToken(address(sweepToken));
+
+        uint256 contractSweepTokenBalanceAfter = sweepToken.balanceOf(
+            address(safe)
+        );
+        uint256 ownerSweepTokenBalanceAfter = sweepToken.balanceOf(
+            address(this)
+        );
+
+        console.log("safe sweepToken After", contractSweepTokenBalanceAfter);
+        console.log("owner sweepToken After", ownerSweepTokenBalanceAfter);
+
+        assertEq(contractSweepTokenBalanceAfter, 0);
+        assertGt(ownerSweepTokenBalanceAfter, ownerSweepTokenBalanceBefore);
     }
 }
