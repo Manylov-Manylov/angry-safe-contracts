@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/access/Ownable.sol";
 import "./interfaces/IUniswapV2Router.sol";
-import "forge-std/Test.sol";
 
 contract AngrySafe is Ownable, Test {
     struct Account {
@@ -27,11 +26,7 @@ contract AngrySafe is Ownable, Test {
     IERC20 private weth;
     IERC20 private usdc;
 
-    event Initialized(
-        address indexed user,
-        uint256 minDeposit,
-        uint256 depositsAmount
-    );
+    event Initialized(address indexed user, uint256 minDeposit, uint256 depositsAmount);
     event Deposit(address indexed user, uint256 amountUSDC, uint256 amountWETH);
     event Withdraw(address indexed user, uint256 amount);
 
@@ -42,11 +37,7 @@ contract AngrySafe is Ownable, Test {
     error AlreadyInitialized();
     error WrongParams();
 
-    constructor(
-        address router_,
-        address weth_,
-        address usdc_
-    ) {
+    constructor(address router_, address weth_, address usdc_) {
         router = IUniswapV2Router(router_);
         weth = IERC20(weth_);
         usdc = IERC20(usdc_);
@@ -78,10 +69,7 @@ contract AngrySafe is Ownable, Test {
         emit Deposit(msg.sender, amount_, wethAmount);
     }
 
-    function _deposit(uint256 amount_)
-        internal
-        returns (uint256, Account memory)
-    {
+    function _deposit(uint256 amount_) internal returns (uint256, Account memory) {
         Account memory account = accounts[msg.sender];
 
         if (account.withdrawOnly) revert WithdrawOnly();
@@ -90,7 +78,7 @@ contract AngrySafe is Ownable, Test {
             revert NotInitialized();
         }
 
-        console.log("amount", amount_);
+        // console.log("amount", amount_);
         if (amount_ < account.minDeposit) {
             revert DepositLessThanMinimal();
         }
@@ -117,11 +105,8 @@ contract AngrySafe is Ownable, Test {
 
         // check if deposit in the same month - then just add deposit to this month deposit,
         // not decreasing deposits left
-        console.log("block timestamp", block.timestamp);
-        console.log(
-            "account.lastDepositTimestamp",
-            account.lastDepositTimestamp
-        );
+        // console.log("block timestamp", block.timestamp);
+        // console.log("account.lastDepositTimestamp", account.lastDepositTimestamp);
 
         if (block.timestamp < account.lastDepositTimestamp + 30 days) {
             return (wethAmount, account);
@@ -137,10 +122,7 @@ contract AngrySafe is Ownable, Test {
         return (wethAmount, account);
     }
 
-    function _swapExactAmountIn(uint256 amountIn)
-        internal
-        returns (uint256 amountOut)
-    {
+    function _swapExactAmountIn(uint256 amountIn) internal returns (uint256 amountOut) {
         usdc.transferFrom(msg.sender, address(this), amountIn);
         usdc.approve(address(router), amountIn);
 
@@ -149,13 +131,8 @@ contract AngrySafe is Ownable, Test {
         path[0] = address(usdc);
         path[1] = address(weth);
 
-        uint256[] memory amounts = router.swapExactTokensForTokens(
-            amountIn,
-            uint256(0),
-            path,
-            address(this),
-            block.timestamp
-        );
+        uint256[] memory amounts =
+            router.swapExactTokensForTokens(amountIn, uint256(0), path, address(this), block.timestamp);
 
         return amounts[1];
     }
@@ -180,14 +157,8 @@ contract AngrySafe is Ownable, Test {
     }
 
     function sweepToken(address token) external onlyOwner {
-        require(
-            address(token) != address(weth),
-            "can not sweep underlying token"
-        );
-        require(
-            address(token) != address(usdc),
-            "can not sweep underlying token"
-        );
+        require(address(token) != address(weth), "can not sweep underlying token");
+        require(address(token) != address(usdc), "can not sweep underlying token");
         uint256 balance = IERC20(token).balanceOf(address(this));
         IERC20(token).transfer(owner(), balance);
     }
