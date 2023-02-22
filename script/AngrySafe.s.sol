@@ -16,18 +16,12 @@ contract DeployScript is Script {
 
         AngrySafe safe = new AngrySafe(router, weth, usdc);
 
+        console.logAddress(address(safe));
+
         vm.stopBroadcast();
     }
 
-    function getAddresses(uint256 mode)
-        internal
-        pure
-        returns (
-            address router,
-            address weth,
-            address usdc
-        )
-    {
+    function getAddresses(uint256 mode) internal pure returns (address router, address weth, address usdc) {
         if (mode == 1) {
             router = 0x10ED43C718714eb63d5aA57B78B54704E256024E;
             weth = 0x2170Ed0880ac9A755fd29B2688956BD959F933F8;

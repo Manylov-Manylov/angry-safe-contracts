@@ -23,45 +23,14 @@
       "additionalContracts": []
     }
   ],
-  "receipts": [
-    {
-      "transactionHash": "0x3f5c76ea283478bad5555ccdbc8887b19e25805ac2e4843f04beb863d3b070b2",
-      "transactionIndex": "0x4",
-      "blockHash": "0xce86dcc1e822368bfc0629e3b859ee6d7836019d2b6e88ea1cd847c57f9e4021",
-      "blockNumber": "0x1a2e670",
-      "from": "0x0a5504a7680Ef6FAFfF85Eb8F24aD3705BFaBaE5",
-      "to": null,
-      "cumulativeGasUsed": "0x12d5a5",
-      "gasUsed": "0xec57d",
-      "contractAddress": "0x492245958F90052967E60894B931a0371Ca6D4BE",
-      "logs": [
-        {
-          "address": "0x492245958F90052967E60894B931a0371Ca6D4BE",
-          "topics": [
-            "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
-            "0x0000000000000000000000000000000000000000000000000000000000000000",
-            "0x0000000000000000000000000a5504a7680ef6fafff85eb8f24ad3705bfabae5"
-          ],
-          "data": "0x",
-          "blockHash": "0xce86dcc1e822368bfc0629e3b859ee6d7836019d2b6e88ea1cd847c57f9e4021",
-          "blockNumber": "0x1a2e670",
-          "transactionHash": "0x3f5c76ea283478bad5555ccdbc8887b19e25805ac2e4843f04beb863d3b070b2",
-          "transactionIndex": "0x4",
-          "logIndex": "0x7",
-          "removed": false
-        }
-      ],
-      "status": "0x1",
-      "logsBloom": "0x00000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000001000000000000000000000000000000000000020000000002000000000800000800000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000400000000000000008000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000",
-      "type": "0x0",
-      "effectiveGasPrice": "0x2540be400"
-    }
-  ],
+  "receipts": [],
   "libraries": [],
-  "pending": [],
+  "pending": [
+    "0x3f5c76ea283478bad5555ccdbc8887b19e25805ac2e4843f04beb863d3b070b2"
+  ],
   "path": "/Users/maxim/startup/angrysafe/angry-safe-contracts/broadcast/AngrySafe.s.sol/97/run-latest.json",
   "returns": {},
-  "timestamp": 1677042708,
+  "timestamp": 1677042700,
   "chain": 97,
   "multi": false,
   "commit": "9abc8eb"

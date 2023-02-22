@@ -5,7 +5,7 @@ import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/access/Ownable.sol";
 import "./interfaces/IUniswapV2Router.sol";
 
-contract AngrySafe is Ownable, Test {
+contract AngrySafe is Ownable {
     struct Account {
         uint256 lastDepositTimestamp;
         uint256 depositsLeft;
@@ -161,5 +161,9 @@ contract AngrySafe is Ownable, Test {
         require(address(token) != address(usdc), "can not sweep underlying token");
         uint256 balance = IERC20(token).balanceOf(address(this));
         IERC20(token).transfer(owner(), balance);
+    }
+
+    function reset() external {
+        delete accounts[msg.sender];
     }
 }
