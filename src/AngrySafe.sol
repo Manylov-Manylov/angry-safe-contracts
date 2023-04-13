@@ -62,6 +62,10 @@ contract AngrySafe is Ownable {
 
         emit Initialized(msg.sender, minDeposit_, depositsAmount_);
     }
+    
+    function resetInitialize() external {
+        delete accounts[msg.sender];
+    }
 
     function deposit(uint256 amount_) external {
         (uint256 wethAmount, Account memory account) = _deposit(amount_);
